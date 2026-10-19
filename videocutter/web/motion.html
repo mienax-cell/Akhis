@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Motion-Szene</title>
+<!--
+  Szenen-Seite für Motion-Videos aus dem Videocutter. Kinetische Schrift im Takt der eingesprochenen Stimme:
+  jedes Wort erscheint, wenn es gesagt wird, betonte Wörter in der Akzentfarbe, Zahlen zählen hoch, jeder
+  Abschnitt (Hook, Mehrwert, Action) hat eine eigene Fläche, Quellen stehen klein darunter, am Ende die
+  Kommentar-Frage und „Keine individuelle Beratung“.
+
+  window.zeit(t) stellt das Bild zur Sekunde t des fertigen Videos hin — nur aus t gerechnet, deshalb kommt beim
+  Ablichten (videoschnitt\grafik\ablichten.mjs) und in der Live-Vorschau der App dasselbe heraus.
+  Die Daten kommen als window.DATEN (beim Ablichten) oder vom Elternfenster (Vorschau).
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0B1020; }
+  body { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .ebene { position: absolute; inset: 0; }
+  #licht { position: absolute; width: 1500px; height: 1500px; left: 0; top: 0; border-radius: 50%; will-change: transform; }
+  #vignette { background: radial-gradient(ellipse at 50% 44%, transparent 45%, rgba(0, 0, 0, .28) 100%); }
+  #saetze { position: absolute; left: 100px; right: 100px; top: 0; bottom: 0; }
+  .satz { position: absolute; left: 0; right: 0; top: 44%; display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
+          column-gap: .24em; font-weight: 800; letter-spacing: -.035em; line-height: 1.04; text-align: center; visibility: hidden; transform-origin: 50% 50%; }
+  .w { display: inline-block; position: relative; white-space: nowrap; will-change: transform, opacity, filter; }
+  .w .mark { position: absolute; left: -.06em; right: -.06em; bottom: .05em; height: .36em; border-radius: .1em; z-index: -1; transform-origin: 0 50%; }
+  .w span { position: relative; }
+  #kopf { position: absolute; left: 0; right: 0; top: 214px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  #handle { font: 650 30px/1 "Segoe UI Variable Text", "Segoe UI", sans-serif; letter-spacing: .01em; }
+  #punkte { display: flex; gap: 10px; }
+  #punkte i { display: block; height: 10px; width: 10px; border-radius: 10px; transition: none; }
+  #balken { position: absolute; left: 0; top: 0; height: 10px; }
+  #quelle { position: absolute; left: 120px; right: 120px; top: 1330px; text-align: center; font: 600 30px/1.35 "Segoe UI Variable Text", "Segoe UI", sans-serif; letter-spacing: .005em; }
+  #quelle b { font-weight: 700; letter-spacing: .08em; font-size: 24px; text-transform: uppercase; margin-right: 10px; }
+  #hinweis { position: absolute; left: 120px; right: 120px; top: 1440px; text-align: center; font: 600 27px/1.3 "Segoe UI Variable Text", "Segoe UI", sans-serif; }
+  #ende { position: absolute; left: 90px; right: 90px; top: 44%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 34px; text-align: center; visibility: hidden; }
+  #ende svg { width: 150px; height: 150px; }
+  #ende .cta { font-weight: 850; font-size: 92px; line-height: 1.04; letter-spacing: -.035em; }
+  #ende .wer { font: 650 34px "Segoe UI Variable Text", "Segoe UI", sans-serif; }
+</style>
+</head>
+<body>
+<div id="grund-alt" class="ebene"></div>
+<div id="grund-neu" class="ebene"></div>
+<div id="licht"></div>
+<div id="vignette" class="ebene"></div>
+<div id="balken"></div>
+<div id="kopf"><div id="handle"></div><div id="punkte"></div></div>
+<div id="saetze"></div>
+<div id="ende"></div>
+<div id="quelle"></div>
+<div id="hinweis"></div>
+<script>
+(() => {
+  'use strict';
+  let D = window.DATEN;
+  try { if (!D && window.parent && window.parent !== window) D = window.parent.MOTION_DATEN; } catch (e) { /* anderes Fenster */ }
+  if (!D || !Array.isArray(D.woerter)) { window.zeit = () => true; return; }
+
+  const THEMEN = {
+    nacht: { start: 'dunkel',
+      dunkel: { bg: '#0B1020', text: '#FFFFFF', akzent: '#E8B44C', mark: 'rgba(232,180,76,.22)', leise: 'rgba(255,255,255,.58)', licht: 'rgba(232,180,76,.20)' },
+      hell: { bg: '#F3EEE3', text: '#0B1020', akzent: '#A9741A', mark: 'rgba(232,180,76,.38)', leise: 'rgba(11,16,32,.55)', licht: 'rgba(232,180,76,.22)' },
+      farbe: { bg: '#E8B44C', text: '#0B1020', akzent: '#0B1020', mark: 'rgba(255,255,255,.55)', leise: 'rgba(11,16,32,.66)', licht: 'rgba(255,248,226,.45)' } },
+    papier: { start: 'hell',
+      dunkel: { bg: '#14201A', text: '#F4F1EA', akzent: '#5BE0A0', mark: 'rgba(91,224,160,.2)', leise: 'rgba(244,241,234,.58)', licht: 'rgba(91,224,160,.16)' },
+      hell: { bg: '#F4F1EA', text: '#14201A', akzent: '#1F8A5B', mark: 'rgba(31,138,91,.22)', leise: 'rgba(20,32,26,.55)', licht: 'rgba(31,138,91,.12)' },
+      farbe: { bg: '#1F8A5B', text: '#FFFFFF', akzent: '#F4F1EA', mark: 'rgba(20,32,26,.35)', leise: 'rgba(255,255,255,.7)', licht: 'rgba(244,241,234,.22)' } },
+    kontrast: { start: 'dunkel',
+      dunkel: { bg: '#0A0A0A', text: '#FFFFFF', akzent: '#FF5A1F', mark: 'rgba(255,90,31,.22)', leise: 'rgba(255,255,255,.55)', licht: 'rgba(255,90,31,.16)' },
+      hell: { bg: '#F5F5F0', text: '#0A0A0A', akzent: '#E2470F', mark: 'rgba(255,90,31,.25)', leise: 'rgba(10,10,10,.55)', licht: 'rgba(255,90,31,.12)' },
+      farbe: { bg: '#FF5A1F', text: '#0A0A0A', akzent: '#FFFFFF', mark: 'rgba(10,10,10,.28)', leise: 'rgba(10,10,10,.66)', licht: 'rgba(255,230,210,.35)' } },
+  };
+  const T = THEMEN[D.thema] || THEMEN.nacht;
+  const gegen = T.start === 'dunkel' ? 'hell' : 'dunkel';
+
+  const kl = x => Math.min(1, Math.max(0, x));
+  const aus3 = x => 1 - Math.pow(1 - kl(x), 3);
+  const rueck = x => { x = kl(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+  const $ = id => document.getElementById(id);
+  const woerter = D.woerter.slice().sort((a, b) => a.t - b.t);
+  const DAUER = D.dauer || (woerter.length ? woerter[woerter.length - 1].e + 2 : 1);
+
+  // ---- Abschnitte: aus dem Skript, sonst nach Sätzen (erst Hook, dann abwechselnd)
+  let abschnitte = (D.abschnitte || []).map(a => ({ rolle: a.rolle || 'mehrwert', quelle: a.quelle || '' }));
+  if (abschnitte.length <= 1) {
+    abschnitte = [{ rolle: 'hook', quelle: '' }];
+    let seit = woerter.length ? woerter[0].t : 0;
+    woerter.forEach((w, n) => {
+      w.abschnitt = abschnitte.length - 1;
+      if (/[.!?]$/.test(w.w) && w.e - seit > 2.5 && n < woerter.length - 1) { abschnitte.push({ rolle: 'mehrwert', quelle: '' }); seit = w.e; }
+    });
+  }
+  let mehrwertNr = 0;
+  abschnitte.forEach(a => {
+    a.stil = a.rolle === 'hook' ? T[T.start] : a.rolle === 'action' ? T.farbe : T[(mehrwertNr++ % 2 === 0) ? gegen : T.start];
+    a.von = Infinity; a.bis = -Infinity;
+  });
+  for (const w of woerter) {
+    const a = abschnitte[Math.min(w.abschnitt || 0, abschnitte.length - 1)];
+    a.von = Math.min(a.von, w.t); a.bis = Math.max(a.bis, w.e);
+  }
+  const genutzt = abschnitte.filter(a => a.von !== Infinity);
+  genutzt.forEach((a, n) => { a.beginn = n === 0 ? 0 : a.von - 0.14; });
+  const letztesWort = woerter.length ? woerter[woerter.length - 1].e : 0;
+  const ENDE_AB = Math.min(DAUER - 0.6, letztesWort + 0.35);
+
+  // ---- Sätze: kurze Bildschirm-Zeilen aus 1 bis 4 Wörtern
+  const phrasen = [];
+  let jetzt = null;
+  const zeichen = ph => ph.woerter.reduce((s, w) => s + w.w.length + 1, 0);
+  woerter.forEach((w, n) => {
+    const vor = woerter[n - 1];
+    const neu = !jetzt || w.abschnitt !== vor.abschnitt || /[.!?:…]$/.test(vor.w) || (/[,;–]$/.test(vor.w) && jetzt.woerter.length >= 2)
+      || jetzt.woerter.length >= 4 || zeichen(jetzt) + w.w.length > 22 || w.t - vor.e > 0.7;
+    if (neu) { jetzt = { woerter: [], abschnitt: abschnitte[Math.min(w.abschnitt || 0, abschnitte.length - 1)] }; phrasen.push(jetzt); }
+    jetzt.woerter.push(w);
+  });
+  phrasen.forEach((ph, n) => {
+    const naechste = phrasen[n + 1];
+    const ende = ph.woerter[ph.woerter.length - 1].e;
+    ph.von = ph.woerter[0].t - 0.12;
+    ph.bis = naechste ? Math.min(naechste.woerter[0].t - 0.12, ende + 1.1) : Math.min(ENDE_AB, ende + 0.9);
+    ph.bis = Math.max(ph.bis, ph.von + 0.3);
+  });
+
+  // ---- Aufbauen
+  const ZAHL = /^([^\d]*)(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d+))?(.*)$/;
+  const saetze = $('saetze');
+  phrasen.forEach((ph, n) => {
+    const laenge = zeichen(ph);
+    const groesse = n === 0 ? (laenge <= 12 ? 168 : laenge <= 18 ? 140 : 118) : (laenge <= 8 ? 172 : laenge <= 14 ? 142 : laenge <= 19 ? 120 : 104);
+    ph.el = document.createElement('div');
+    ph.el.className = 'satz';
+    ph.el.style.fontSize = groesse + 'px';
+    ph.el.style.color = ph.abschnitt.stil.text;
+    ph.teile = ph.woerter.map(w => {
+      const span = document.createElement('span');
+      span.className = 'w';
+      const text = document.createElement('span');
+      text.textContent = w.w;
+      let mark = null;
+      if (w.betont) {
+        text.style.color = ph.abschnitt.stil.akzent;
+        mark = document.createElement('i');
+        mark.className = 'mark';
+        mark.style.background = ph.abschnitt.stil.mark;
+        span.append(mark);
+      }
+      span.append(text);
+      ph.el.append(span);
+      const z = ZAHL.exec(w.w);
+      const wert = z ? parseFloat(z[2].replace(/\./g, '') + (z[3] ? '.' + z[3] : '')) : 0;
+      const zaehl = z && wert >= 2 && !/^\d{4}$/.test(z[2]) ? { vor: z[1], wert, stellen: z[3] ? z[3].length : 0, nach: z[4] } : null;
+      return { w, span, text, mark, zaehl };
+    });
+    saetze.append(ph.el);
+  });
+
+  // Kopf: Name und ein Punkt je Abschnitt
+  $('handle').textContent = D.handle || '';
+  const punkte = genutzt.map(() => document.createElement('i'));
+  $('punkte').append(...punkte);
+
+  // Schlusskarte
+  const dm = /DM/.test(D.cta || '');
+  $('ende').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${dm
+    ? '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>'
+    : '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/>'}</svg>
+    <div class="cta"></div><div class="wer"></div>`;
+  $('ende').querySelector('.cta').textContent = D.cta || '';
+  $('ende').querySelector('.wer').textContent = D.handle || '';
+  $('hinweis').textContent = D.hinweis || '';
+
+  const zahlText = (x, stellen) => x.toLocaleString('de-DE', { minimumFractionDigits: stellen, maximumFractionDigits: stellen });
+  const abschnittBei = t => { let a = genutzt[0]; for (const x of genutzt) if (t >= x.beginn) a = x; return a; };
+
+  window.zeit = t => {
+    // Fläche: Kreis-Wischer beim Abschnittswechsel, in der Schlusskarte die Akzentfläche
+    const ab = abschnittBei(t) || { stil: T[T.start], beginn: 0 };
+    const nr = genutzt.indexOf(ab);
+    const endeAn = t >= ENDE_AB;
+    const stil = endeAn ? T.farbe : ab.stil;
+    const vorStil = endeAn ? ab.stil : (nr > 0 ? genutzt[nr - 1].stil : ab.stil);
+    const seit = endeAn ? t - ENDE_AB : t - ab.beginn;
+    const p = (nr > 0 || endeAn) ? aus3(seit / 0.55) : 1;
+    $('grund-alt').style.background = vorStil.bg;
+    const neu = $('grund-neu');
+    neu.style.background = stil.bg;
+    neu.style.clipPath = p < 1 ? `circle(${(p * 125).toFixed(2)}% at 50% 44%)` : 'none';
+    const licht = $('licht');
+    licht.style.background = `radial-gradient(circle, ${stil.licht} 0%, transparent 62%)`;
+    licht.style.transform = `translate(${(-210 + Math.sin(t * 0.33) * 260).toFixed(1)}px, ${(60 + Math.cos(t * 0.27) * 230).toFixed(1)}px)`;
+    $('vignette').style.opacity = stil === T.hell || stil.bg === T.hell.bg ? 0.35 : 1;
+
+    // Kopf und Balken
+    const balken = $('balken');
+    balken.style.width = `${(kl(t / DAUER) * 100).toFixed(3)}%`;
+    balken.style.background = stil.akzent === stil.text ? stil.leise : stil.akzent;
+    $('handle').style.color = stil.leise;
+    punkte.forEach((pk, n) => {
+      const an = n === nr && !endeAn;
+      pk.style.width = an ? '46px' : '10px';
+      pk.style.background = an ? (stil.akzent === stil.text ? stil.text : stil.akzent) : stil.leise;
+      pk.style.opacity = n < nr || endeAn ? 0.9 : an ? 1 : 0.45;
+    });
+
+    // Sätze
+    for (const ph of phrasen) {
+      const da = t >= ph.von - 0.02 && t < ph.bis && !endeAn;
+      ph.el.style.visibility = da ? 'visible' : 'hidden';
+      if (!da) continue;
+      const dauer = Math.max(0.3, ph.bis - ph.von);
+      const raus = kl((t - (ph.bis - 0.13)) / 0.13);
+      const zoom = 1 + 0.03 * kl((t - ph.von) / dauer);
+      ph.el.style.transform = `translateY(-50%) translateY(${(-raus * 26).toFixed(1)}px) scale(${zoom.toFixed(4)})`;
+      ph.el.style.opacity = (1 - raus).toFixed(3);
+      for (const teil of ph.teile) {
+        const t0 = teil.w.t - 0.06;
+        const q = kl((t - t0) / (teil.w.betont ? 0.42 : 0.32));
+        const e = aus3(q);
+        const s = teil.span.style;
+        if (q <= 0) { s.opacity = 0; continue; }
+        const skala = teil.w.betont ? 0.72 + 0.28 * rueck(q) : 1;
+        s.opacity = kl(q * 2.6).toFixed(3);
+        s.transform = `translateY(${((1 - e) * 0.42).toFixed(4)}em) scale(${skala.toFixed(4)})`;
+        s.filter = e < 0.97 ? `blur(${((1 - e) * 12).toFixed(2)}px)` : 'none';
+        if (teil.mark) teil.mark.style.transform = `scaleX(${aus3((t - t0 - 0.14) / 0.32).toFixed(4)})`;
+        if (teil.zaehl) {
+          const z = teil.zaehl;
+          const x = z.wert * aus3((t - t0) / 0.75);
+          const text = z.vor + zahlText(z.stellen ? x : Math.round(x), z.stellen) + z.nach;
+          if (teil.text.textContent !== text) teil.text.textContent = text;
+        }
+      }
+    }
+
+    // Quelle unter dem Abschnitt, der eine Zahl nennt
+    const quelle = $('quelle');
+    const qa = !endeAn && ab.quelle ? kl((t - ab.von - 0.25) / 0.35) * (1 - kl((t - ab.bis - 0.6) / 0.3)) : 0;
+    if (qa > 0) {
+      if (quelle.dataset.fuer !== String(nr)) { quelle.innerHTML = ''; const b = document.createElement('b'); b.textContent = 'Quelle'; quelle.append(b, ab.quelle); quelle.dataset.fuer = String(nr); }
+      quelle.style.color = stil.leise;
+      quelle.querySelector('b').style.color = stil.akzent === stil.text ? stil.text : stil.akzent;
+    }
+    quelle.style.opacity = qa.toFixed(3);
+    quelle.style.transform = `translateY(${((1 - qa) * 14).toFixed(1)}px)`;
+
+    // Hinweis „Keine individuelle Beratung“ in der Action und auf der Schlusskarte
+    const hinweis = $('hinweis');
+    const action = genutzt.find(a => a.rolle === 'action');
+    const ha = endeAn ? kl((t - ENDE_AB - 0.4) / 0.4) : action && t >= action.von ? kl((t - action.von - 0.3) / 0.4) : 0;
+    hinweis.style.opacity = ha.toFixed(3);
+    hinweis.style.color = stil.leise;
+
+    // Schlusskarte
+    const ende = $('ende');
+    ende.style.visibility = endeAn ? 'visible' : 'hidden';
+    if (endeAn) {
+      const k = t - ENDE_AB;
+      ende.style.color = stil.text;
+      ende.querySelector('svg').style.stroke = stil.text;
+      ende.style.opacity = kl((k - 0.12) / 0.35).toFixed(3);
+      ende.style.transform = `translateY(-50%) scale(${(0.86 + 0.14 * rueck((k - 0.1) / 0.55)).toFixed(4)})`;
+      ende.querySelector('.wer').style.color = stil.leise;
+    }
+    return true;
+  };
+  window.AUSKUNFT = { klaenge: genutzt.slice(1).map(a => ({ zeit: +a.beginn.toFixed(3), art: 'wusch', staerke: 0.5 })) };
+  window.zeit(0);
+})();
+</script>
+</body>
+</html>

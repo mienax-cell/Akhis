@@ -1,0 +1,27 @@
+{
+  "beschreibung": "Schnell: harte Schnitte ohne Luft, auch weiche Füllwörter raus, zwei Wörter groß im Bild, leichter Zoom an jedem Schnitt, Hochformat 9:16",
+
+  "schnitt": {
+    "streng": true,
+    "pause_ab": 0.35,
+    "pause_ziel": 0.12,
+    "vorlauf": 0.04,
+    "nachlauf": 0.07,
+    "anfang_luft": 0.1,
+    "ende_luft": 0.25
+  },
+
+  "untertitel": {
+    "groesse": 0.105,
+    "woerter_max": 2,
+    "zeichen_max": 14,
+    "aktiv_groesse": 1.1
+  },
+
+  "bild": {
+    "format": "9:16",
+    "anpassen": "zuschneiden",
+    "zoom_bei_schnitt": 1.08,
+    "zoom_takt": 5
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "beschreibung": "Ruhig: lässt Atempausen stehen, schneidet nur klare Füllwörter und Versprecher, dezente Untertitel ohne Großbuchstaben",
+
+  "schnitt": {
+    "pause_ab": 1.2,
+    "pause_ziel": 0.55,
+    "vorlauf": 0.1,
+    "nachlauf": 0.16,
+    "anfang_luft": 0.4,
+    "ende_luft": 0.7
+  },
+
+  "untertitel": {
+    "schrift": "Segoe UI",
+    "fett": true,
+    "grossbuchstaben": false,
+    "satzzeichen": true,
+    "groesse": 0.055,
+    "farbe_aktiv": "#FFFFFF",
+    "umriss": 0.07,
+    "position": 0.8,
+    "position_quer": 0.86,
+    "woerter_max": 6,
+    "zeichen_max": 32,
+    "einblenden": false
+  }
+}

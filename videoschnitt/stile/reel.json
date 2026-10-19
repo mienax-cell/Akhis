@@ -1,0 +1,43 @@
+{
+  "beschreibung": "Reel: dicht geschnitten wie Chefs Vorbild vom 2026-10-11, Untertitel bauen sich Wort für Wort auf, Zahlen betont, Zoom-Wechsel spätestens alle 4 s, Fortschrittsbalken; Format bleibt wie gefilmt",
+  "schnitt": {
+    "pause_ab": 0.45,
+    "pause_ziel": 0.2,
+    "vorlauf": 0.05,
+    "nachlauf": 0.08,
+    "anfang_luft": 0.1,
+    "ende_luft": 0.3
+  },
+  "untertitel": {
+    "art": "aufbau",
+    "kommend": 0,
+    "schrift": "Segoe UI Black",
+    "grossbuchstaben": false,
+    "satzzeichen": true,
+    "groesse": 0.082,
+    "farbe": "#FFFFFF",
+    "farbe_aktiv": "#FFFFFF",
+    "farbe_dunkel": "#111111",
+    "kontrast": "auto",
+    "umriss": 0.035,
+    "umriss_weich": 0.05,
+    "schatten": 0,
+    "position": 0.675,
+    "woerter_max": 3,
+    "zeichen_max": 18,
+    "einblenden": false,
+    "betonen": "zahlen",
+    "farbe_betont": "#FF5A1F",
+    "farbe_betont_2": "#FFD23F"
+  },
+  "bindung": {
+    "fortschritt": true,
+    "fortschritt_farbe": "#FF5A1F"
+  },
+  "bild": {
+    "zoom_bei_schnitt": 1.12,
+    "zoom_takt": 4,
+    "zoom_mitte_y": 0.38
+  },
+  "ton": { "effekte": 0.7 }
+}

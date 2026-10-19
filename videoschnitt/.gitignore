@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+modelle/
+tests/daten/
+tests/_aussen*
+beispiele/*/ausgabe/
+*.schnitt/

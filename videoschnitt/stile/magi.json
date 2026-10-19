@@ -1,0 +1,27 @@
+{
+  "beschreibung": "MAGI: wie reel, in MAGIs Farben und ohne Zoom und Balken — für Grafik-Videos wie das Erklärvideo",
+  "erbt": "reel",
+  "schnitt": {
+    "anfang_luft": 0.25,
+    "ende_luft": 0.9
+  },
+  "untertitel": {
+    "groesse": 0.078,
+    "farbe": "#F4EEFF",
+    "farbe_aktiv": "#F4EEFF",
+    "farbe_dunkel": "#14101F",
+    "umriss_farbe": "#06040D",
+    "position": 0.675,
+    "zeichen_max": 20,
+    "betonen": "aus",
+    "farbe_betont": "#B388FF",
+    "farbe_betont_2": "#B388FF"
+  },
+  "bindung": {
+    "fortschritt": false
+  },
+  "bild": {
+    "zoom_bei_schnitt": 0,
+    "zoom_takt": 0
+  }
+}

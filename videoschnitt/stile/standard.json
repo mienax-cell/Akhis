@@ -1,0 +1,89 @@
+{
+  "_hilfe": "Der Standard-Stil mit allen Schlüsseln. Jeder andere Stil erbt von hier (oder über \"erbt\" von einem anderen) und nennt nur, was er anders will. Die wichtigsten sind in der README erklärt. Zeiten in Sekunden, Größen als Anteil der kürzeren Bildkante, Lagen als Anteil der Bildhöhe von oben.",
+  "beschreibung": "Short-Form-Standard: Pausen, Füllwörter und Versprecher raus, große Untertitel mit gelbem Wort",
+
+  "sprache": "de",
+
+  "transkription": {
+    "modell": "auto",
+    "hinweis": "Ähm, also, äh, ich, ich meine, das, das ist, öhm, hm."
+  },
+
+  "schnitt": {
+    "fuellwoerter": ["äh", "ähm", "äm", "öh", "öhm", "hm", "hmm", "mhm", "ehm", "uhm"],
+    "fuellwoerter_streng": ["also", "halt", "quasi", "sozusagen", "irgendwie", "eigentlich"],
+    "streng": false,
+
+    "pause_ab": 0.6,
+    "pause_ziel": 0.25,
+    "vorlauf": 0.06,
+    "nachlauf": 0.1,
+    "anfang_luft": 0.25,
+    "ende_luft": 0.4,
+
+    "wiederholungen": true,
+    "neuansaetze": true,
+    "doppelte_saetze": true,
+    "unsichere_anwenden": false
+  },
+
+  "untertitel": {
+    "an": true,
+    "art": "farbe",
+    "kommend": 0,
+    "schrift": "Arial Black",
+    "schrift_datei": null,
+    "fett": false,
+    "grossbuchstaben": true,
+    "satzzeichen": false,
+    "groesse": 0.09,
+    "farbe": "#FFFFFF",
+    "farbe_aktiv": "#FFE600",
+    "farbe_dunkel": "#111111",
+    "kontrast": "aus",
+    "umriss_farbe": "#000000",
+    "umriss": 0.07,
+    "umriss_weich": 0,
+    "schatten": 0.04,
+    "position": 0.7,
+    "position_quer": 0.8,
+    "breite_max": 0.88,
+    "woerter_max": 3,
+    "zeichen_max": 18,
+    "aktiv_groesse": 1.0,
+    "einblenden": true,
+    "betonen": "aus",
+    "farbe_betont": "#FFE600",
+    "farbe_betont_2": "#FFE600"
+  },
+
+  "bindung": {
+    "fortschritt": false,
+    "fortschritt_farbe": "#FFE600",
+    "fortschritt_hoehe": 0.006
+  },
+
+  "bild": {
+    "format": "original",
+    "anpassen": "zuschneiden",
+    "fps": "original",
+    "kante_max": 1920,
+    "zoom_bei_schnitt": 0,
+    "zoom_takt": 0,
+    "zoom_mitte_y": 0.4
+  },
+
+  "ton": {
+    "lautheit": true,
+    "raumklang": 0,
+    "effekte": 0,
+    "ziel_lufs": -14,
+    "blende_ms": 8
+  },
+
+  "ausgabe": {
+    "encoder": "auto",
+    "qualitaet": 19,
+    "ton_kbit": 192
+  }
+}
